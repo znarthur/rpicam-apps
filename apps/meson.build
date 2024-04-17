@@ -22,6 +22,12 @@ rpicam_raw = executable('rpicam-raw', files('rpicam_raw.cpp'),
                         link_with : rpicam_app,
                         install : true)
 
+rpicam_triggered = executable('rpicam-triggered', files('rpicam_triggered.cpp'),
+                        include_directories : include_directories('..'),
+                        dependencies: [libcamera_dep, boost_dep],
+                        link_with : rpicam_app,
+                        install : true)
+
 rpicam_jpeg = executable('rpicam-jpeg', files('rpicam_jpeg.cpp'),
                          include_directories : include_directories('..'),
                          dependencies: [libcamera_dep, boost_dep],
@@ -44,6 +50,10 @@ install_symlink('libcamera-hello',
 install_symlink('libcamera-raw',
                 install_dir: get_option('bindir'),
                 pointing_to: 'rpicam-raw')
+
+install_symlink('libcamera-triggered',
+                install_dir: get_option('bindir'),
+                pointing_to: 'rpicam-triggered')
 
 install_symlink('libcamera-jpeg',
                 install_dir: get_option('bindir'),
