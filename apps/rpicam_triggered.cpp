@@ -24,12 +24,6 @@ protected:
 	void createEncoder() { encoder_ = std::unique_ptr<Encoder>(new NullEncoder(GetOptions())); }
 };
 
-void exit_handler(sig_atomic_t s)
-{
-	LOG(1, "Caught signal: " << s );
-	return;
-}
-
 
 // The main even loop for the application.
 
@@ -40,18 +34,18 @@ static void event_loop(LibcameraRaw &app)
 	pinMode(0,INPUT); //Trigger input
 	pinMode(2,INPUT); //Kill loop.
 
-	VideoOptions const *options = app.GetOptions();
+	VideoOptions *options = app.GetOptions();
 	std::string file = options->output + '_';
-	options->output = file + '0'
+	options->output = file + "0";
 	std::unique_ptr<Output> output = std::unique_ptr<Output>(Output::Create(options));
 	app.SetEncodeOutputReadyCallback(std::bind(&Output::OutputReady, output.get(), _1, _2, _3, _4));
 	app.SetMetadataReadyCallback(std::bind(&Output::MetadataReady, output.get(), _1));
-	LOG(1, "Saving to file: " << options->output)
+	LOG(1, "Saving to file: " << options->output);
 	app.OpenCamera();
 	app.ConfigureVideo(LibcameraRaw::FLAG_VIDEO_RAW);
 
-	LOG(1, "Waiting for trigger on Pin17 (WiringPi 0)")
-	for (unsigned int f_index = 1; ; f_index++)
+	LOG(1, "Waiting for trigger on Pin17 (WiringPi 0)");
+	for (int f_index = 1; ; f_index++)
 	{
 		if(digitalRead(0) == 1)
 		{
@@ -95,7 +89,7 @@ static void event_loop(LibcameraRaw &app)
 					app.StopCamera();
 					app.StopEncoder();
 					// Create new encoder with output stream indexed incrementally.
-					options->ouput = file + std::to_string(f_index);
+					options->output = file + std::to_string(f_index);
 					output = std::unique_ptr<Output>(Output::Create(options));
 					app.SetEncodeOutputReadyCallback(std::bind(&Output::OutputReady, output.get(), _1, _2, _3, _4));
 					app.SetMetadataReadyCallback(std::bind(&Output::MetadataReady, output.get(), _1));
@@ -107,7 +101,7 @@ static void event_loop(LibcameraRaw &app)
 		delay(1);
 		if(digitalRead(2) == 1)
 		{
-			app.CloseCamera()
+			app.CloseCamera();
 			return;
 		}
 	}
