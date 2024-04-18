@@ -35,18 +35,24 @@ void exit_handler(sig_atomic_t s)
 
 static void event_loop(LibcameraRaw &app)
 {
+	//Setup trigger and stop-bit
 	wiringPiSetup();
-	pinMode(0,INPUT);
+	pinMode(0,INPUT); //Trigger input
+	pinMode(2,INPUT); //Kill loop.
 
 	VideoOptions const *options = app.GetOptions();
+	std::string file = options->output + '_';
+	options->output = file + '0'
 	std::unique_ptr<Output> output = std::unique_ptr<Output>(Output::Create(options));
 	app.SetEncodeOutputReadyCallback(std::bind(&Output::OutputReady, output.get(), _1, _2, _3, _4));
 	app.SetMetadataReadyCallback(std::bind(&Output::MetadataReady, output.get(), _1));
-
+	LOG(1, "Saving to file: " << options->output)
 	app.OpenCamera();
 	app.ConfigureVideo(LibcameraRaw::FLAG_VIDEO_RAW);
+
 	LOG(1, "Waiting for trigger on Pin17 (WiringPi 0)")
-	while(1){
+	for (unsigned int f_index = 1; ; f_index++)
+	{
 		if(digitalRead(0) == 1)
 		{
 			app.StartEncoder();
@@ -75,7 +81,7 @@ static void event_loop(LibcameraRaw &app)
 
 				LOG(2, "Viewfinder frame " << count);
 				auto now = std::chrono::high_resolution_clock::now();
-				if (options->timeout && (now - start_time) > options->timeout.value)
+				if ((options->timeout && (now - start_time) > options->timeout.value) || (digitalRead(1) == 1))
 				{
 					app.StopCamera();
 					app.StopEncoder();
@@ -86,11 +92,24 @@ static void event_loop(LibcameraRaw &app)
 
 				if(digitalRead(0) == 0)
 				{
+					app.StopCamera();
+					app.StopEncoder();
+					// Create new encoder with output stream indexed incrementally.
+					options->ouput = file + std::to_string(f_index);
+					output = std::unique_ptr<Output>(Output::Create(options));
+					app.SetEncodeOutputReadyCallback(std::bind(&Output::OutputReady, output.get(), _1, _2, _3, _4));
+					app.SetMetadataReadyCallback(std::bind(&Output::MetadataReady, output.get(), _1));
+
 					break;
 				}
 			}
 		}
 		delay(1);
+		if(digitalRead(2) == 1)
+		{
+			app.CloseCamera()
+			return;
+		}
 	}
 }
 
