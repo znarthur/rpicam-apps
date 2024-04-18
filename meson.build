@@ -32,6 +32,7 @@ elif neon == 'armv8-neon'
 endif
 
 libcamera_dep = dependency('libcamera', required : true)
+wiringPi = cxx.find_library('wiringPi', required : true)
 
 summary({
             'location' : libcamera_dep.get_variable('libdir'),

@@ -24,7 +24,7 @@ rpicam_raw = executable('rpicam-raw', files('rpicam_raw.cpp'),
 
 rpicam_triggered = executable('rpicam-triggered', files('rpicam_triggered.cpp'),
                         include_directories : include_directories('..'),
-                        dependencies: [libcamera_dep, boost_dep],
+                        dependencies: [libcamera_dep, boost_dep, wiringPi],
                         link_with : rpicam_app,
                         install : true)
 
